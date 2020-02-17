@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sh*tThemDown</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="content">
+        <!-- 初始化界面 -->
+        <div id="init">
+            <img src="imgs/LOGO.png" id="logoImg" alt="logo">
+            <img src="imgs/chooseText.png" id="chooseOne" alt="choose one">
+            <div id="choosePart">
+                <div>
+                    <img id="left" src="imgs/leftButton.png" class="button" alt="">
+                </div>
+                <div id="mainCharacters">
+                    <div id="characterBg">
+                        <img src="imgs/Ale.gif" id="character" alt="">
+                    </div>
+                    <img src="imgs/AleText.png" id="characterName" class="btmButton" alt="">
+                </div>
+                <div></div>
+                <img id="right" src="imgs/rightButton.png" class="button" alt="">
+            </div>
+            <img src="imgs/startButton.png" id="start" alt="">
+        </div>
+        <!-- 游戏界面 -->
+        <div id="gameMode" style="display: none;">
+            <div id="score">
+                Total: <span id="scores">0</span>
+            </div>
+            <div id="shitRemain">
+                <img src="imgs/shit.png" style="width: 25px;" alt="">
+                <span id="shitsRemain" style="margin-left: 10px;">6</span>
+            </div>
+            <div id="timer"></div>
+        </div>
+
+        <!-- 核分界面 -->
+        <div id="endPart" style="display: none;">
+            <img src="imgs/goodEnd.png" alt="" id="endingImg">
+            <span id="scroeToal">Your total scores is:<span id="scroesToal"></span></span>
+            <div id="tryAgain">Try Again</div>
+        </div>
+
+    </div>
+</body>
+<script>
+    var leftbtn = false;
+    var rightbtn = false;
+    var upbtn = false;
+    var downbtn = false;
+    var shoot = false;
+    var check = false;
+    var score = document.getElementById("scores");
+    var scores = 0;
+    var tryAgain = document.getElementById("tryAgain");
+    var shitRemain = 6;
+    //选择器
+    var buttonright = document.getElementById("right");
+    var buttonleft = document.getElementById("left");
+    var flag = true;
+    buttonright.addEventListener("click", function () {
+        if (flag == true) {
+            document.getElementById("character").src = "imgs/Santi.gif";
+            document.getElementById("characterName").src = "imgs/SantiText.png";
+            flag = false
+        } else {
+            document.getElementById("character").src = "imgs/Ale.gif";
+            document.getElementById("characterName").src = "imgs/AleText.png";
+            flag = true;
+        }
+    });
+    buttonleft.addEventListener("click", function () {
+        if (flag == true) {
+            document.getElementById("character").src = "imgs/Santi.gif";
+            document.getElementById("characterName").src = "imgs/SantiText.png";
+            flag = false
+        } else {
+            document.getElementById("character").src = "imgs/Ale.gif";
+            document.getElementById("characterName").src = "imgs/AleText.png";
+            flag = true;
+        }
+    });
+
+
+    //开始后的游戏状态
+    var start = document.getElementById("start");
+    var gameMode = document.getElementById("gameMode");
+    var enemiesArray = [];
+    var shitsArray = [];
+    var endPart = document.getElementById("endPart");
+    var timerShow = document.getElementById("timer");
+    var timer = 15;
+    var endingImg = document.getElementById("endingImg");
+    start.addEventListener("click", function () {
+        document.getElementById("init").style.display = "none";
+        gameMode.style.display = "block";
+
+        var TimerDown = setInterval(timerDown, 1000);
+        var CreatNewEnemy = setInterval(creatNewEnemy, 500);
+        var EnemyMove = setInterval(enemyMove, 50);
+        var Play = setInterval(play, 50);
+        var ShootShit = setInterval(shootShit, 120);
+        var MakeShit = setInterval(makeShit, 40);
+        var CheckDead = setInterval(checkDead, 50);
+        var IsFailed = setInterval(isFailed,50);
+        var ShitIncrease = setInterval(shitIncrease,800);
+
+
+        function timerDown() {
+            timer--;
+            if (timer <= 5 && timer > 0) {
+                timerShow.innerHTML = timer;
+            } else if (timer == 0) {
+                if (scores >= 80) {
+                    endingImg.src = "imgs/goodEnd.png";
+                } else {
+                    endingImg.src = "imgs/badEnd.png";
+                }
+                timerShow.innerHTML = "";
+                endPart.style.display = "block";
+                clearInterval(TimerDown);
+                clearInterval(CreatNewEnemy);
+                clearInterval(EnemyMove);
+                clearInterval(Play);
+                clearInterval(ShootShit);
+                clearInterval(MakeShit);
+                clearInterval(CheckDead);
+                clearInterval(IsFailed);
+            }
+        }
+
+
+
+        function enemies(imgSrc, x, y, speed) {
+            this.imgNode = document.createElement("img");
+            this.imgSrc = imgSrc;
+            this.x = x;
+            this.y = y;
+            this.isDead = false;
+            this.exitTime = 20;
+            this.speed = speed;
+            this.init = function () {
+                this.imgNode.src = this.imgSrc;
+                this.imgNode.className = "enemy";
+                this.imgNode.style.position = "absolute";
+                this.imgNode.style.left = this.x + "px";
+                this.imgNode.style.top = this.y + "px";
+                gameMode.appendChild(this.imgNode);
+            }
+            this.init();
+            this.move = function () {
+                this.imgNode.style.top = parseInt(this.imgNode.style.top) + this.speed + "px";
+            }
+        }
+        function creatNewEnemy() {
+            var Enemies = new enemies("imgs/enemies" + Math.floor(Math.random() * (4 - 1 + 1) + 1) + ".gif", parseInt(Math.random() * 400), 700, -parseInt(Math.random() * 10) - 1);
+            enemiesArray.push(Enemies);
+        }
+
+        function enemyMove() {
+            for (var i = 0; i < enemiesArray.length; i++) {
+                if (enemiesArray[i].isDead == false) {
+                    enemiesArray[i].move();
+                    if (parseInt(enemiesArray[i].imgNode.style.top) <= -45) {
+                        gameMode.removeChild(enemiesArray[i].imgNode);
+                        enemiesArray.splice(i, 1);
+                    }
+
+                } else {
+                    enemiesArray[i].exitTime--;
+                    if (enemiesArray[i].exitTime == 0) {
+                        gameMode.removeChild(enemiesArray[i].imgNode);
+                        enemiesArray.splice(i, 1);
+
+                    }
+                }
+            }
+        }
+
+
+        function player(imgSrc, x, y, speed) {
+            this.imgNode = document.createElement("img");
+            this.imgSrc = imgSrc;
+            this.x = x;
+            this.y = y;
+            this.speed = speed;
+            this.init = function () {
+                this.imgNode.src = this.imgSrc;
+                this.imgNode.className = "player";
+                this.imgNode.style.position = "absolute";
+                this.imgNode.style.left = this.x + "px";
+                this.imgNode.style.top = this.y + "px";
+                gameMode.appendChild(this.imgNode);
+            }
+            this.init();
+            this.moveleft = function () {
+                if (parseInt(player.imgNode.style.left) == -70) {
+                    player.imgNode.style.left = 370 + "px";
+                } else {
+                    this.imgNode.style.left = parseInt(this.imgNode.style.left) - this.speed + "px";
+                }
+            }
+            this.moveright = function () {
+                if (parseInt(player.imgNode.style.left) == 370) {
+                    player.imgNode.style.left = -70 + "px";
+                } else {
+                    this.imgNode.style.left = parseInt(this.imgNode.style.left) + this.speed + "px";
+
+                }
+            }
+            this.moveup = function () {
+                if (parseInt(player.imgNode.style.top) == 0) {
+                    player.imgNode.style.top = 0 + "px";
+                } else {
+                    this.imgNode.style.top = parseInt(this.imgNode.style.top) - this.speed + "px";
+
+                }
+            }
+            this.movedown = function () {
+                if (parseInt(player.imgNode.style.top) == 610) {
+                    player.imgNode.style.top = 610 + "px";
+                } else {
+                    this.imgNode.style.top = parseInt(this.imgNode.style.top) + this.speed + "px";
+
+                }
+            }
+            this.space = function () {
+                if(shitRemain>0){
+                    check = false;
+                    shitRemain--;
+                var shits = new shit("imgs/shit.png", parseInt(this.imgNode.style.left) + 35, parseInt(this.imgNode.style.top) + 50, 12);
+                shitsArray.push(shits);
+                }
+                
+            }
+        }
+
+
+        var shitRemainText = document.getElementById("shitsRemain");
+        function shitIncrease(){
+            shitRemain++
+        }
+
+
+
+        if (flag == true) {
+            var player = new player("imgs/Ale.gif", 150, 0, 10);
+        } else {
+            var player = new player("imgs/Santi.gif", 150, 0, 8);
+        }
+
+
+
+
+        document.body.onkeydown = function () {
+            var e = window.event || arguments[0];
+
+            if (e.keyCode == 37) {
+                leftbtn = true;
+            }
+            if (e.keyCode == 38) {
+                upbtn = true;
+            }
+            if (e.keyCode == 39) {
+                rightbtn = true;
+            }
+            if (e.keyCode == 40) {
+                downbtn = true;
+            }
+            if (e.keyCode == 32) {
+                shoot = true;
+            }
+        }
+        document.body.onkeyup = function () {
+            var e = window.event || arguments[0];
+            if (e.keyCode == 37) {
+                leftbtn = false;
+            }
+            if (e.keyCode == 38) {
+                upbtn = false;
+            }
+            if (e.keyCode == 39) {
+                rightbtn = false;
+            }
+            if (e.keyCode == 40) {
+                downbtn = false;
+            }
+            if (e.keyCode == 32) {
+                shoot = false;
+            }
+
+        }
+        function play() {
+            if (leftbtn == true) {
+                player.moveleft();
+            }
+            if (upbtn == true) {
+                player.moveup();
+            }
+            if (rightbtn == true) {
+                player.moveright();
+            }
+            if (downbtn == true) {
+                player.movedown();
+            }
+
+            shitRemainText.innerHTML=shitRemain;
+
+        }
+
+
+        function shootShit() {
+
+            if (shoot == true) {
+                player.space();
+            }
+        }
+
+
+        function shit(imgSrc, x, y, speed) {
+            this.imgNode = document.createElement("img");
+            this.imgSrc = imgSrc;
+            this.x = x;
+            this.y = y;
+            this.speed = speed;
+            this.init = function () {
+                this.imgNode.src = this.imgSrc;
+                this.imgNode.className = "shit";
+                this.imgNode.style.position = "absolute";
+                this.imgNode.style.left = this.x + "px";
+                this.imgNode.style.top = this.y + "px";
+                gameMode.appendChild(this.imgNode);
+            }
+            this.init();
+            this.move = function () {
+                this.imgNode.style.top = parseInt(this.imgNode.style.top) + this.speed + "px";
+            }
+        }
+
+        function makeShit() {
+            for (var n = 0; n < shitsArray.length; n++) {
+                shitsArray[n].move();
+                if (parseInt(shitsArray[n].imgNode.style.top) >= 700) {
+                    gameMode.removeChild(shitsArray[n].imgNode);
+                    shitsArray.splice(n, 1);
+                }
+
+            }
+        }
+
+
+        //碰撞检测
+        function checkDead() {
+            for (var i = 0; i < enemiesArray.length; i++) {
+                for (var n = 0; n < shitsArray.length; n++) {
+                    var shitLeft = parseInt(shitsArray[n].imgNode.style.left);
+                    var shitTop = parseInt(shitsArray[n].imgNode.style.top);
+                    var enemyLeft = parseInt(enemiesArray[i].imgNode.style.left);
+                    var enemyTop = parseInt(enemiesArray[i].imgNode.style.top);
+                    if (check == false && shitLeft - 15 >= enemyLeft - 39 && shitLeft + 15 <= enemyLeft + 39 && shitTop - 13.965 >= enemyTop - 39 && shitTop + 13.965 <= enemyTop + 39) {
+                        check = true;
+
+                        console.log(1);
+                        enemiesArray[i].isDead = true;
+                        gameMode.removeChild(shitsArray[n].imgNode);
+                        shitsArray.splice(n, 1);
+                        if (flag == true) {
+                            scores = scores + enemiesArray[i].imgNode.src.match(/\d+/g) * 2;
+                        } else {
+                            scores = Math.ceil(scores + enemiesArray[i].imgNode.src.match(/\d+/g) * 2.3);
+                        }
+                        enemiesArray[i].imgNode.src = "imgs/boom.gif";
+                        score.innerHTML = scores;
+                        document.getElementById("scroesToal").innerHTML = scores;
+
+                    }
+
+                }
+
+            }
+        }
+        // 失败检测
+        function isFailed() {
+            for (var i = 0; i < enemiesArray.length; i++) {
+                var playerLeft = parseInt(player.imgNode.style.left);
+                var playerTop = parseInt(player.imgNode.style.top);
+                var enemyLeft = parseInt(enemiesArray[i].imgNode.style.left);
+                var enemyTop = parseInt(enemiesArray[i].imgNode.style.top);
+                if (playerLeft - 22.5 > enemyLeft - 39 && playerLeft + 22.5 < enemyLeft + 39 && playerTop  > enemyTop - 39 && playerTop < enemyTop + 39) {
+                    console.log("comfirm");
+                    if (scores >= 45) {
+                        endingImg.src = "imgs/goodEnd.png";
+                    } else {
+                        endingImg.src = "imgs/badEnd.png";
+                    }
+                    timerShow.innerHTML = "";
+                    endPart.style.display = "block";
+                    clearInterval(TimerDown);
+                    clearInterval(CreatNewEnemy);
+                    clearInterval(EnemyMove);
+                    clearInterval(Play);
+                    clearInterval(ShootShit);
+                    clearInterval(MakeShit);
+                    clearInterval(CheckDead);
+                    clearInterval(IsFailed);
+                }
+            }
+        }
+        
+
+
+
+
+        tryAgain.addEventListener("click", function () {
+            window.location.reload();
+        })
+
+    })
+
+</script>
+
+</html>
